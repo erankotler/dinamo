@@ -1,0 +1,1 @@
+# dinamo initial exploration
