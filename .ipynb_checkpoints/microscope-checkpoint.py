@@ -34,7 +34,7 @@ from sklearn.model_selection import KFold, LeaveOneOut, train_test_split
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn import metrics
 from sklearn.metrics import classification_report
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, accuracy_score, balanced_accuracy_score
 
 
 ### DNAm data object
@@ -411,13 +411,17 @@ def plot_cv_single_roc(cv_res, title_pfx="", out_f=None):
     plt.show()
 
 def plot_pred_prob_by_labels(cv_res, title_pfx="", out_f=None):
-    sns.stripplot(x=[item for sublist in cv_res["y_test"] for item in sublist], 
-                  y=[item for sublist in cv_res["y_pred_prob"] for item in sublist], 
-                  size=3, 
-                  palette=["darkred","lightblue"])
+    y_true = [item for sublist in cv_res["y_test"] for item in sublist]
+    y_probs = [item for sublist in cv_res["y_pred_prob"] for item in sublist]
+    y_pred = cv_res["y_pred"]
+    sns.stripplot(x=y_true, y=y_probs, size=3, palette=["darkred","lightblue"])
     plt.xlabel("True label")
     plt.ylabel("Model prediction\n(prob. for class 1)")
-    plt.title(title_pfx + ' Predicted probabilities per class')
+
+    score = accuracy_score(y_true, y_pred)
+    bal_score = balanced_accuracy_score(y_true, y_pred) # Defined as averaged recall for each class
+    
+    plt.title(title_pfx + ' Predicted probabilities per class\n(Accuracy: %.2f, Balanced Accuracy: %.2f)'%(score, bal_score))
 
     if out_f is not None:
         plt.savefig(out_f)        
@@ -428,7 +432,6 @@ def print_report(cv_res, THRESH=0.5):
     y_test = [item for sublist in cv_res["y_test"] for item in sublist] # Flatten
     # y_pred = cv_res["y_pred"] # for defined thesholds
     y_pred = np.array([item for sublist in cv_res["y_pred_prob"] for item in sublist]) # Flatten (for using predicted probablities    
-    # print(y_pred)
     rep = classification_report(y_test, y_pred > THRESH)
     print(rep)
 
